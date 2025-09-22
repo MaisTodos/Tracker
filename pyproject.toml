@@ -1,21 +1,17 @@
-[project]
+[tool.poetry]
 name = "tracker"
 version = "0.3.0"
-description = ""
+description = "Tracker library for exception handling"
 authors = [
-    {name = "Gabriel de Oliveira Chaves", email = "gabriel.chaves@maistodos.com.br"},
-    {name = "Johnathan Barbosa de Araujo", email = "johnathan.araujo@maistodos.com.br"}
+    "Gabriel de Oliveira Chaves <gabriel.chaves@maistodos.com.br>",
+    "Johnathan Barbosa de Araujo <johnathan.araujo@maistodos.com.br>"
 ]
 readme = "README.md"
-requires-python = ">=3.9,<4.0"
-dependencies = [
-    "sentry-sdk (>=2.35.2,<3.0.0)"
-]
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+sentry-sdk = ">=2.35.2,<3.0.0"
+redis = "^6.4.0"
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
@@ -24,6 +20,10 @@ black = "^25.1.0"
 isort = "^6.0.1"
 coverage = "^7.10.6"
 mutmut = "^3.3.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
 multi_line_output = 3

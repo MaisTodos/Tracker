@@ -7,6 +7,7 @@ from .interfaces import (
     ITrackerHandlerException,
     ITrackerHandlerMessage,
 )
+from .providers.redis import redis_exception_handler_factory
 from .types import Contexts, Tags
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ class Tracker:
         self.__message_handlers = message_handlers or []
         self.__exception_handlers = exception_handlers or []
         self.__event_handlers = event_handlers or []
+        self.__exception_handlers.append(redis_exception_handler_factory())
 
     def set_tags(self, tags: Tags):
         handlers = (
