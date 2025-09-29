@@ -12,6 +12,8 @@ from ..interfaces import (
 )
 from ..types import Contexts, Tags
 
+from huble.core import ensure_current_trace_id
+
 _logger_tags = ContextVar("logger_tags", default=default_dict)
 _logger_contexts = ContextVar("logger_contexts", default=default_dict)
 
@@ -81,8 +83,9 @@ class LoggerExceptionHandler(ITrackerHandlerException):
         extra = {
             "tags": _logger_tags.get(),
             "contexts": _logger_contexts.get(),
+            "trace_id": ensure_current_trace_id(),
         }
-
+        
         if tracker_exception.tags:
             extra["tags"].update(tracker_exception.tags)
 
@@ -107,7 +110,7 @@ class LoggerEventHandler(ITrackerHandlerEvent):
         self.core.set_contexts(contexts)
 
     def capture_event(self, tracker_event: TrackerEvent):
-        extra = {"tags": _logger_tags.get(), "contexts": _logger_contexts.get()}
+        extra = {"tags": _logger_tags.get(), "contexts": _logger_contexts.get(), "trace_id": ensure_current_trace_id()}
 
         if tracker_event.tags:
             extra["tags"].update(tracker_event.tags)
