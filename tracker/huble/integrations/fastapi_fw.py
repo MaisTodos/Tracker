@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-from ...huble.core import (
+from ..core import (
     CANON_TRACE_HEADER, get_trace_id_if_any,
     set_current_trace_id, reset_current_trace_id, ensure_current_trace_id
 )

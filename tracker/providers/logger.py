@@ -65,6 +65,7 @@ class LoggerMessageHandler(ITrackerHandlerMessage):
 
         if tracker_message.contexts:
             extra["contexts"].update(tracker_message.contexts)
+            extra["trace_id"] = tracker_message.contexts.get("trace_id", ensure_current_trace_id())
 
         self.core.logger.info(tracker_message.message.value, extra=extra)
 
