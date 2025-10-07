@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8,<4.0"
 dependencies = []
 
-[poetry.optional-dependencies]
+[project.optional-dependencies]
 sentry = ["sentry-sdk (>=1.20.0,<3.0.0)"]
 
 [build-system]
