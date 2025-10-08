@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Annotated, Dict, Optional, cast
+from typing import Dict, Optional, cast
 
 from ..dtos import TrackerException, TrackerMessage
 from ..interfaces import ITrackerHandlerException, ITrackerHandlerMessage
@@ -12,9 +12,7 @@ class SentryCore:
     class SentryConfig:
         dsn: str
         environment: str
-        use_otel: Annotated[
-            bool, "Use Sentry with OpenTelemetry if available, else fallback to Sentry"
-        ] = True
+        use_otel: bool = True  # Use OpenTelemetry if available, else fallback to sentry own instrumentation
         traces_sample_rate: Optional[float] = None
         before_send_function: Optional[callable] = None
 
