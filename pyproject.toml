@@ -30,10 +30,7 @@ pytest = [
     { version = "^7.4.4", markers = "python_version < '3.9'" },
     { version = "^8.4.1", markers = "python_version >= '3.9'" }
 ]
-black = [
-    { version = "^23.9.1", markers = "python_version < '3.9'" },
-    { version = "^25.1.0", markers = "python_version >= '3.9'" }
-]
+black = "23.9.1"
 coverage = [
     { version = "^7.10.6", markers = "python_version >= '3.9'" },
     { version = "^6.4.6", markers = "python_version < '3.9'" }
