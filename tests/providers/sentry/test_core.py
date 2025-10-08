@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import MagicMock
 
 from tracker.providers.sentry import SentryCore
 
@@ -48,12 +49,16 @@ def test_sentry_core_init_without_otel(mock_init):
 
 
 def test_sentry_core_init_with_otel_without_otel_installed(mock_init):
+    
+    my_integration = MagicMock()
+
     SentryCore(
         SentryCore.SentryConfig(
             dsn="http://example.com",
             environment="testing",
             traces_sample_rate=1.0,
             use_otel=True,
+            integrations=[my_integration]
         ),
     )
 
@@ -62,7 +67,7 @@ def test_sentry_core_init_with_otel_without_otel_installed(mock_init):
     mock_init.assert_called_once_with(
         dsn="http://example.com",
         environment="testing",
-        integrations=[sentry_logging_integration],
+        integrations=[sentry_logging_integration, my_integration],
         traces_sample_rate=1.0,
         before_send=None,
         instrumenter="sentry",

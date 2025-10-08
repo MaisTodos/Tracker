@@ -15,6 +15,7 @@ class SentryCore:
         use_otel: bool = True  # Use OpenTelemetry if available, else fallback to sentry own instrumentation
         traces_sample_rate: Optional[float] = None
         before_send_function: Optional[callable] = None
+        integrations: Optional[list] = None
 
     def __init__(self, config: SentryConfig):
         try:
@@ -40,7 +41,7 @@ class SentryCore:
         self.sentry_sdk.init(
             dsn=config.dsn,
             environment=config.environment,
-            integrations=[sentry_logging_integration],
+            integrations=[sentry_logging_integration, *(config.integrations or [])],
             traces_sample_rate=config.traces_sample_rate,
             before_send=config.before_send_function,
             instrumenter="otel" if otel_initialized else "sentry",
