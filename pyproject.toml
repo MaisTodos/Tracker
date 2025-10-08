@@ -11,14 +11,14 @@ authors = [
     "Johnathan Barbosa de Araujo <johnathan.araujo@maistodos.com.br>"
 ]
 readme = "README.md"
-requires-python = ">=3.8,<4.0"
 packages = [{ include = "tracker" }]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
+sentry-sdk = { version = ">=1.20.0,<3.0.0", optional = true }
 
 [tool.poetry.extras]
-sentry = ["sentry-sdk (>=1.20.0,<3.0.0)"]
+sentry = ["sentry-sdk"]
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
