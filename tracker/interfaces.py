@@ -16,7 +16,9 @@ class ISetMixin(ABC):
 
 class ITrackerHandlerException(ISetMixin, ABC):
     @abstractmethod
-    def capture_exception(self, tracker_exception: TrackerException):  # pragma: no cover
+    def capture_exception(
+        self, tracker_exception: TrackerException
+    ):  # pragma: no cover
         ...
 
 
