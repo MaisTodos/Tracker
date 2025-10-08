@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "tracker"
-version = "0.3.0"
+version = "0.4.0"
 description = ""
 authors = [
     "Gabriel de Oliveira Chaves <gabriel.chaves@maistodos.com.br>",
