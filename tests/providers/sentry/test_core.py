@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from tracker.providers.sentry import SentryCore
 
@@ -49,7 +50,6 @@ def test_sentry_core_init_without_otel(mock_init):
 
 
 def test_sentry_core_init_with_otel_without_otel_installed(mock_init):
-    
     my_integration = MagicMock()
 
     SentryCore(
@@ -58,7 +58,7 @@ def test_sentry_core_init_with_otel_without_otel_installed(mock_init):
             environment="testing",
             traces_sample_rate=1.0,
             use_otel=True,
-            integrations=[my_integration]
+            integrations=[my_integration],
         ),
     )
 
