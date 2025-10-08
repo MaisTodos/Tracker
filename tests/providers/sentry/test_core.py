@@ -1,13 +1,38 @@
+import pytest
+
 from tracker.providers.sentry import SentryCore
 
 
-def test_sentry_core_with_tracing_enabled(mock_init):
+def test_sentry_core_init_without_sentry(monkeypatch):
+    # Simulate ImportError when sentry_sdk is not installed
+    monkeypatch.setitem(__import__("sys").modules, "sentry_sdk", None)
+
+    with pytest.raises(ImportError) as excinfo:
+        SentryCore(
+            SentryCore.SentryConfig(
+                dsn="http://example.com",
+                environment="testing",
+            ),
+        )
+
+    error_message = (
+        "sentry-sdk is required to use Sentry with Tracker."
+        " Please install it via 'pip install sentry-sdk'."
+    )
+    assert error_message == str(excinfo.value)
+
+
+def test_sentry_core_init_without_otel(mock_init):
+    before_send_function = lambda event, _: event
+
     SentryCore(
         SentryCore.SentryConfig(
             dsn="http://example.com",
             environment="testing",
             traces_sample_rate=1.0,
-        )
+            before_send_function=before_send_function,
+            use_otel=False,
+        ),
     )
 
     sentry_logging_integration = mock_init.call_args[1]["integrations"][0]
@@ -17,27 +42,80 @@ def test_sentry_core_with_tracing_enabled(mock_init):
         environment="testing",
         integrations=[sentry_logging_integration],
         traces_sample_rate=1.0,
-        enable_tracing=True,
+        before_send=before_send_function,
+        instrumenter="sentry",
     )
 
 
-def test_sentry_core_with_tracing_disabled(mock_init):
+def test_sentry_core_init_with_otel_without_otel_installed(mock_init):
     SentryCore(
         SentryCore.SentryConfig(
             dsn="http://example.com",
             environment="testing",
-            traces_sample_rate=0.0,
-        )
+            traces_sample_rate=1.0,
+            use_otel=True,
+        ),
     )
+
+    sentry_logging_integration = mock_init.call_args[1]["integrations"][0]
+
+    mock_init.assert_called_once_with(
+        dsn="http://example.com",
+        environment="testing",
+        integrations=[sentry_logging_integration],
+        traces_sample_rate=1.0,
+        before_send=None,
+        instrumenter="sentry",
+    )
+
+
+def test_sentry_core_init_with_otel(mock_init):
+    # Mock OpenTelemetry imports
+    import sys
+    from unittest.mock import MagicMock
+
+    sys.modules["opentelemetry"] = MagicMock()
+    sys.modules["opentelemetry.trace"] = MagicMock()
+    sys.modules["opentelemetry.propagate"] = MagicMock()
+    sys.modules["sentry_sdk.integrations.opentelemetry"] = MagicMock()
+
+    SentryCore(
+        SentryCore.SentryConfig(
+            dsn="http://example.com",
+            environment="testing",
+            traces_sample_rate=1.0,
+            use_otel=True,
+        ),
+    )
+
+    # assert OpenTelemetry components were initialized
+    from opentelemetry import trace
+    from opentelemetry.propagate import set_global_textmap
+    from sentry_sdk.integrations.opentelemetry import (
+        SentryPropagator,
+        SentrySpanProcessor,
+    )
+
+    trace.get_tracer_provider().add_span_processor.assert_called_once()
+    set_global_textmap.assert_called_once()
+    SentrySpanProcessor.assert_called_once()
+    SentryPropagator.assert_called_once()
 
     sentry_logging_integration = mock_init.call_args[1]["integrations"][0]
     mock_init.assert_called_once_with(
         dsn="http://example.com",
         environment="testing",
         integrations=[sentry_logging_integration],
-        traces_sample_rate=0.0,
-        enable_tracing=False,
+        traces_sample_rate=1.0,
+        before_send=None,
+        instrumenter="otel",
     )
+
+    # Clean up mocked modules
+    del sys.modules["opentelemetry"]
+    del sys.modules["opentelemetry.trace"]
+    del sys.modules["opentelemetry.propagate"]
+    del sys.modules["sentry_sdk.integrations.opentelemetry"]
 
 
 def test_sentry_core_capture_message(capture_message_mock):
