@@ -79,7 +79,6 @@ class SentryExceptionHandler(ITrackerHandlerException):
         self.sentry.set_contexts(contexts)
 
     def capture_exception(self, tracker_exception: TrackerException):
-
         if tracker_exception.tags:
             self.sentry.set_tags(tracker_exception.tags)
 

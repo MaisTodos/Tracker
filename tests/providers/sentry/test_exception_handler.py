@@ -5,7 +5,6 @@ def test_sentry_exception_handler_capture(
     sentry_core_mock,
     tracker_exception,
 ):
-
     exception_handler = SentryExceptionHandler(sentry_core_mock)
 
     exception_handler.set_tags({"global_tag": "global_value"})
@@ -26,7 +25,6 @@ def test_sentry_exception_handler_capture_with_tags_and_contexts(
     sentry_core_mock,
     tracker_exception,
 ):
-
     exception_handler = SentryExceptionHandler(sentry_core_mock)
 
     exception_handler.set_tags({"global_tag": "global_value"})
