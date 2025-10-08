@@ -1,21 +1,24 @@
-[project]
+[build-system]
+requires = ["poetry-core>=1.8.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
 name = "tracker"
 version = "0.3.0"
 description = ""
 authors = [
-    {name = "Gabriel de Oliveira Chaves", email = "gabriel.chaves@maistodos.com.br"},
-    {name = "Johnathan Barbosa de Araujo", email = "johnathan.araujo@maistodos.com.br"}
+    "Gabriel de Oliveira Chaves <gabriel.chaves@maistodos.com.br>",
+    "Johnathan Barbosa de Araujo <johnathan.araujo@maistodos.com.br>"
 ]
 readme = "README.md"
 requires-python = ">=3.8,<4.0"
-dependencies = []
+packages = [{ include = "tracker" }]
 
-[project.optional-dependencies]
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+
+[tool.poetry.extras]
 sentry = ["sentry-sdk (>=1.20.0,<3.0.0)"]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
