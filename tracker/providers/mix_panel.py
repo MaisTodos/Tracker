@@ -52,13 +52,20 @@ class MixPanelHandlerEvent(ITrackerHandlerEvent):
 
     def __extract_event_attrs(self, event: TrackerEvent) -> dict:
         ret = {}
-        if event.tags:
-            ret.update(**event.tags)
-        if event.contexts:
-            ret.update(**event.contexts)
-        for key in ["distinct_id", "id", "user_id"]:
-            del ret[key]
-        return ret
+        try:
+            if event.tags:
+                ret.update(**event.tags)
+            if event.contexts:
+                ret.update(**event.contexts)
+            for key in ["distinct_id", "id", "user_id"]:
+                del ret[key]
+        except Exception as ex:
+            logger.exception(ex)
+        finally:
+            return ret
+
+    def track(self, distinct_id: str, event: str, event_attrs: dict):
+        self.mp.track(distinct_id, event, event_attrs)
 
     def capture_event(self, event: TrackerEvent):
         distinct_id = self.__extract_distinct_id(event=event)
@@ -66,5 +73,5 @@ class MixPanelHandlerEvent(ITrackerHandlerEvent):
             return logger.error(
                 f"MixPanel attempting to send event without 'distinct_id' tag: {event}"
             )
-        event_attrs = self.__extract_event_attrs(event=event)
-        self.mp.track(distinct_id, event.event, event_attrs)
+        attrs = self.__extract_event_attrs(event=event)
+        self.track(distinct_id=distinct_id, event=event.event.value, event_attrs=attrs)
