@@ -37,7 +37,7 @@ jobs:
     
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --with dev -E sentry
+      run: poetry install --no-interaction --with dev --all-extras
     
     - name: Black
       run: |
