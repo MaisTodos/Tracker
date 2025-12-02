@@ -216,6 +216,11 @@ except ValueError as e:
 
 ## Contribuição e Desenvolvimento
 
+### Instalação
+```bash
+poetry install --all-extras
+```
+
 ### Executar Testes
 
 ```bash
