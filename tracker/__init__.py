@@ -10,6 +10,7 @@ from .providers import (
     LoggerEventHandler,
     LoggerExceptionHandler,
     LoggerMessageHandler,
+    MixPanelHandlerEvent,
     SentryCore,
     SentryExceptionHandler,
     SentryMessageHandler,
@@ -35,4 +36,5 @@ __all__ = [
     "SentryCore",
     "SentryExceptionHandler",
     "SentryMessageHandler",
+    "MixPanelHandlerEvent",
 ]

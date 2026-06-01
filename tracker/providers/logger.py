@@ -1,10 +1,8 @@
 import logging
-from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Optional
 
 from ..dtos import TrackerEvent, TrackerException, TrackerMessage
-from ..helpers import default_dict
 from ..interfaces import (
     ITrackerHandlerEvent,
     ITrackerHandlerException,
@@ -12,14 +10,20 @@ from ..interfaces import (
 )
 from ..types import Contexts, Tags
 
-_logger_tags = ContextVar("logger_tags", default=default_dict)
-_logger_contexts = ContextVar("logger_contexts", default=default_dict)
-
 
 class LoggerCore:
     @dataclass
     class LoggerConfig:
         logger_handler: Optional[logging.Handler] = None
+
+    _SET_TAGS_MESSAGE: str = (
+        "LoggerCore does not support global 'set_tags', ignoring "
+        "(pass tags per message/event/exception instead)."
+    )
+    _SET_CONTEXTS_MESSAGE: str = (
+        "LoggerCore does not support global 'set_contexts', ignoring "
+        "(pass contexts per message/event/exception instead)."
+    )
 
     def __init__(self, config: LoggerConfig):
         self.logger = logging.getLogger("Tracker.LoggerCore")
@@ -35,14 +39,10 @@ class LoggerCore:
             self.logger.addHandler(handler)
 
     def set_tags(self, tags: Tags):
-        temp_logger_tags = _logger_tags.get().copy()
-        temp_logger_tags.update(tags)
-        _logger_tags.set(temp_logger_tags)
+        self.logger.debug(self._SET_TAGS_MESSAGE)
 
     def set_contexts(self, contexts: Contexts):
-        temp_logger_contexts = _logger_contexts.get().copy()
-        temp_logger_contexts.update(contexts)
-        _logger_contexts.set(temp_logger_contexts)
+        self.logger.debug(self._SET_CONTEXTS_MESSAGE)
 
 
 class LoggerMessageHandler(ITrackerHandlerMessage):
@@ -56,7 +56,7 @@ class LoggerMessageHandler(ITrackerHandlerMessage):
         self.core.set_contexts(contexts)
 
     def capture_message(self, tracker_message: TrackerMessage):
-        extra = {"tags": _logger_tags.get(), "contexts": _logger_contexts.get()}
+        extra = {"tags": {}, "contexts": {}}
 
         if tracker_message.tags:
             extra["tags"].update(tracker_message.tags)
@@ -78,10 +78,7 @@ class LoggerExceptionHandler(ITrackerHandlerException):
         self.core.set_contexts(contexts)
 
     def capture_exception(self, tracker_exception: TrackerException):
-        extra = {
-            "tags": _logger_tags.get(),
-            "contexts": _logger_contexts.get(),
-        }
+        extra = {"tags": {}, "contexts": {}}
 
         if tracker_exception.tags:
             extra["tags"].update(tracker_exception.tags)
@@ -107,7 +104,7 @@ class LoggerEventHandler(ITrackerHandlerEvent):
         self.core.set_contexts(contexts)
 
     def capture_event(self, tracker_event: TrackerEvent):
-        extra = {"tags": _logger_tags.get(), "contexts": _logger_contexts.get()}
+        extra = {"tags": {}, "contexts": {}}
 
         if tracker_event.tags:
             extra["tags"].update(tracker_event.tags)
