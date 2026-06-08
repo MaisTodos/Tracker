@@ -1,11 +1,6 @@
 import logging
 
-from tracker.providers.logger import LoggerCore, _logger_contexts, _logger_tags
-
-
-def test_logger_core_context_vars_and_tags_initial_state():
-    assert _logger_tags.get() == {}
-    assert _logger_contexts.get() == {}
+from tracker.providers.logger import LoggerCore
 
 
 def test_logger_core_init_with_config():
@@ -38,19 +33,15 @@ def test_logger_core_init_without_config():
     assert isinstance(logger.handlers[0], logging.StreamHandler)
 
 
-def test_logger_core_set_multiple_tags(logger_core):
-    logger_core.set_tags({"tag1": "value1", "tag2": "value2"})
-    logger_core.set_tags({"tag3": "value3"})
+def test_logger_core_set_tags_logs_debug(logger_core, caplog):
+    with caplog.at_level(logging.DEBUG, logger="Tracker.LoggerCore"):
+        logger_core.set_tags({"tag1": "value1"})
 
-    assert _logger_tags.get() == {"tag1": "value1", "tag2": "value2", "tag3": "value3"}
+    assert LoggerCore._SET_TAGS_MESSAGE in [r.message for r in caplog.records]
 
 
-def test_logger_core_set_multiple_contexts(logger_core):
-    logger_core.set_contexts({"context1": "value1", "context2": "value2"})
-    logger_core.set_contexts({"context3": "value3"})
+def test_logger_core_set_contexts_logs_debug(logger_core, caplog):
+    with caplog.at_level(logging.DEBUG, logger="Tracker.LoggerCore"):
+        logger_core.set_contexts({"context1": "value1"})
 
-    assert _logger_contexts.get() == {
-        "context1": "value1",
-        "context2": "value2",
-        "context3": "value3",
-    }
+    assert LoggerCore._SET_CONTEXTS_MESSAGE in [r.message for r in caplog.records]

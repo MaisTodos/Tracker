@@ -50,6 +50,33 @@ tracker = Tracker(
 )
 ```
 
+### MixPanel (eventos)
+
+O provedor MixPanel implementa apenas o handler de eventos (`event_handlers`). Requer o extra
+`mixpanel` instalado (`pip install mixpanel`).
+
+```python
+from tracker import Tracker, MixPanelHandlerEvent
+
+mix_panel_handler = MixPanelHandlerEvent(
+    config=MixPanelHandlerEvent.MixPanelConfig(
+        project_token="YOUR_PROJECT_TOKEN",
+        service_name="auth-service",
+    )
+)
+
+tracker = Tracker(event_handlers=[mix_panel_handler])
+```
+
+O `distinct_id` do evento é resolvido a partir das tags `distinct_id`, `id` ou `user_id` (nessa
+ordem). Quando nenhuma está presente, usa-se `"{service_name}-server"`. Cada evento recebe ainda
+um atributo `source` igual a `"{service_name}-server"`.
+
+> **Observação:** Logger e MixPanel **não** aplicam tags/contextos globais
+> (`tracker.set_tags`/`set_contexts`) — essas chamadas apenas emitem um log `debug`. Apenas o
+> Sentry honra tags/contextos globais. Para Logger e MixPanel, informe as tags/contextos por
+> evento/mensagem/exceção.
+
 ## Uso
 
 O Tracker é orientado a tipos à dados a emitir: exceções, mensagens e eventos. Para mensagens e eventos, é necessário definir enums.
@@ -215,6 +242,11 @@ except ValueError as e:
 ```
 
 ## Contribuição e Desenvolvimento
+
+### Instalação
+```bash
+poetry install --all-extras
+```
 
 ### Executar Testes
 

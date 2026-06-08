@@ -4,6 +4,7 @@ from .logger import (
     LoggerExceptionHandler,
     LoggerMessageHandler,
 )
+from .mix_panel import MixPanelHandlerEvent
 from .sentry import SentryCore, SentryExceptionHandler, SentryMessageHandler
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "LoggerMessageHandler",
     "LoggerExceptionHandler",
     "LoggerEventHandler",
+    "MixPanelHandlerEvent",
 ]

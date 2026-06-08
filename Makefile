@@ -1,3 +1,6 @@
+install:
+	poetry install --all-extras
+
 test:
 	poetry run pytest -svv --showlocals tests
 
