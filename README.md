@@ -269,6 +269,53 @@ make black
 make isort
 ```
 
+### Empacotamento (pyproject.toml + setup.cfg)
+
+O projeto mantém os metadados de empacotamento em **dois** lugares, de propósito:
+
+- **`pyproject.toml`** (`[tool.poetry]`) — fonte usada pelo Poetry/PEP 517. O build normal
+  (`poetry build`, `poetry install`, `poetry add git+https://.../Tracker.git`) usa o backend
+  `poetry.core.masonry.api` declarado em `[build-system]` e **ignora** o `setup.py`/`setup.cfg`.
+- **`setup.py` + `setup.cfg`** — existem **apenas** para compatibilidade com o **Chalice**.
+  Ao montar a Lambda layer (`automatic_layer: "true"`), o Chalice baixa a árvore de fontes de
+  cada dependência git e extrai name/version rodando `python setup.py egg_info`. Como o Tracker
+  é um pacote poetry-core puro, sem esses arquivos ele falharia com
+  `UnsupportedPackageError: Unable to retrieve name/version for package: tracker`.
+  O `setup.py` é só um stub (`from setuptools import setup; setup()`) que dispara o setuptools,
+  que por sua vez lê os metadados do `setup.cfg`.
+
+> ⚠️ **Ao gerar um upgrade, atualize os dois arquivos em paralelo.** Os campos abaixo estão
+> duplicados e precisam ficar sempre iguais, senão o Chalice e o Poetry passam a enxergar
+> metadados diferentes:
+>
+> | O que muda | `pyproject.toml` (`[tool.poetry]`) | `setup.cfg` |
+> | --- | --- | --- |
+> | Versão do release | `version` | `[metadata] version` |
+> | Versão do Python suportada | `[tool.poetry.dependencies] python` | `[options] python_requires` |
+> | Extra `sentry` / novas deps | `[tool.poetry.dependencies]` + `[tool.poetry.extras]` | `[options.extras_require]` / `[options] install_requires` |
+> | Novo (sub)pacote | `packages = [{ include = "..." }]` | `[options] packages` |
+
+**Checklist de bump de versão (ex.: 0.5.0 → 0.6.0):**
+
+1. Atualize `version` em `pyproject.toml` **e** `[metadata] version` em `setup.cfg` para o
+   mesmo valor.
+2. Se mexeu em dependências ou no `python`, replique a mudança nas duas tabelas correspondentes
+   (ver tabela acima).
+3. Valide que ambos os caminhos de build enxergam os mesmos metadados:
+   ```bash
+   # Caminho do Chalice — deve imprimir o Name/Version novos:
+   python setup.py egg_info && grep -E '^(Name|Version):' tracker.egg-info/PKG-INFO
+   rm -rf tracker.egg-info                 # artefato temporário (já está no .gitignore)
+
+   # Caminho do Poetry — deve gerar tracker-<versão>.{tar.gz,whl}:
+   poetry build && ls dist/ && rm -rf dist/
+   ```
+4. Crie a tag correspondente (`vX.Y.Z`) ao publicar o release.
+
+> `setup.py egg_info` precisa do `setuptools` instalado no ambiente (o venv poetry-core puro
+> não o traz). No CI/Chalice ele já está disponível; localmente, rode num ambiente com
+> `setuptools` (ex.: `pip install setuptools` num venv separado).
+
 ## Contribuindo
 
 1. Faça um fork do projeto
@@ -282,3 +329,5 @@ make isort
 - Mantenha a cobertura de testes acima de 100%
 - Mantenha testes de mutação em 100%
 - Siga as convenções de código (Black + isort)
+- Ao bumpar versão ou mexer em dependências, atualize `pyproject.toml` **e** `setup.cfg` em
+  paralelo (ver [Empacotamento](#empacotamento-pyprojecttoml--setupcfg))
