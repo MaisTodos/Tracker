@@ -1,6 +1,58 @@
 import logging
 
+import pytest
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad
+
 from tracker.core import Tracker
+
+
+def test_hash_distinct_id_invalid_key_length():
+    with pytest.raises(ValueError) as err:
+        Tracker.hash_distinct_id(value="12345678901", key=bytes(16))
+
+    assert err.value.args[0] == "Error in key length. Must be 32 bytes long, got 16"
+
+
+def test_hash_distinct_id_different_values():
+    key = bytes(32)
+
+    first = Tracker.hash_distinct_id(value="12345678901", key=key)
+    second = Tracker.hash_distinct_id(value="98765432100", key=key)
+
+    assert first != second
+
+
+def test_hash_distinct_id_different_keys():
+    document = "12345678901"
+
+    first = Tracker.hash_distinct_id(value=document, key=bytes(32))
+    second = Tracker.hash_distinct_id(value=document, key=bytes(range(32)))
+
+    assert first != second
+
+
+def test_hash_distinct_id_is_deterministic():
+    document = "12345678901"
+    key = bytes(32)
+
+    first = Tracker.hash_distinct_id(value=document, key=key)
+    second = Tracker.hash_distinct_id(value=document, key=key)
+
+    assert first == second
+
+
+def test_hash_distinct_id_is_reversible():
+    document = "12345678901"
+    key = bytes(32)
+
+    hashed = Tracker.hash_distinct_id(value=document, key=key)
+
+    cipher = AES.new(key, AES.MODE_ECB)
+    decrypted = unpad(cipher.decrypt(bytes.fromhex(hashed)), AES.block_size)
+    decoded = decrypted.decode("utf-8")
+
+    assert decoded == document
 
 
 def test_tracker_emit_without_handlers(
