@@ -17,6 +17,7 @@ packages = [{ include = "tracker" }]
 python = ">=3.8,<4.0"
 sentry-sdk = { version = ">=1.20.0,<3.0.0", optional = true }
 mixpanel  = { version = ">=4.10.0,<4.11", optional = true }
+pycryptodome = "^3.23.0"
 
 [tool.poetry.extras]
 sentry = ["sentry-sdk"]
