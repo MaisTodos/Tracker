@@ -1,6 +1,9 @@
 import logging
 from typing import List, Optional
 
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+
 from .dtos import TrackerEvent, TrackerException, TrackerMessage
 from .interfaces import (
     ITrackerHandlerEvent,
@@ -22,6 +25,18 @@ class Tracker:
         self.__message_handlers = message_handlers or []
         self.__exception_handlers = exception_handlers or []
         self.__event_handlers = event_handlers or []
+
+    @staticmethod
+    def hash_distinct_id(value: str, key: bytes) -> str:
+        if len(key) != 32:
+            raise ValueError(
+                f"Error in key length. Must be 32 bytes long, got {len(key)}"
+            )
+
+        cipher = AES.new(key, AES.MODE_ECB)
+        padded_value = pad(value.encode("utf-8"), AES.block_size)
+
+        return cipher.encrypt(padded_value).hex()
 
     def set_tags(self, tags: Tags):
         handlers = (
