@@ -175,6 +175,29 @@ tracker.set_contexts({
 })
 ```
 
+## Fingerprint determinístico
+
+O tracker permite gerar um fingerprint determinístico via AES-256-ECB com padding PKCS#7, retornado como string hexadecimal.
+
+```python
+from tracker import Tracker
+
+key = bytes.fromhex("KEY_32_BYTES")
+value = "value"
+
+distinct_id = Tracker.hash_distinct_id(value=value, key=key)
+```
+
+```sql
+SET block_encryption_mode = 'aes-256-ecb';
+SELECT HEX(AES_ENCRYPT('value', UNHEX('KEY_32_BYTES')));
+```
+
+**Orientações de utilização:**
+
+- `key` deve ter exatamente 32 bytes (`ValueError` é retornado caso contrário).
+- `value` deve ser um valor curto e de formato fixo (ex.: CPF).
+- Não reutilizar esse método para cifrar dados arbitrários/longos.
 
 ### Exemplo Completo
 
