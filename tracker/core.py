@@ -1,8 +1,8 @@
+import hashlib
+import hmac
 import logging
+import re
 from typing import List, Optional
-
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad
 
 from .dtos import TrackerEvent, TrackerException, TrackerMessage
 from .interfaces import (
@@ -27,16 +27,17 @@ class Tracker:
         self.__event_handlers = event_handlers or []
 
     @staticmethod
-    def hash_distinct_id(value: str, key: bytes) -> str:
-        if len(key) != 32:
+    def hash_distinct_id(value: str, secret: str) -> str:
+        if len(secret) < 32:
             raise ValueError(
-                f"Error in key length. Must be 32 bytes long, got {len(key)}"
+                f"Error in secret length. Must be at least 32 characters long, got {len(secret)}"
             )
 
-        cipher = AES.new(key, AES.MODE_ECB)
-        padded_value = pad(value.encode("utf-8"), AES.block_size)
+        normalized_value = re.sub(r"\D", "", value)
 
-        return cipher.encrypt(padded_value).hex()
+        return hmac.new(
+            secret.encode("utf-8"), normalized_value.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
 
     def set_tags(self, tags: Tags):
         handlers = (
