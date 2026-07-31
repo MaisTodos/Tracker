@@ -1,58 +1,50 @@
+import hashlib
+import hmac
 import logging
 
 import pytest
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import unpad
 
 from tracker.core import Tracker
 
 
-def test_hash_distinct_id_invalid_key_length():
+def test_hash_distinct_id_invalid_secret_length():
     with pytest.raises(ValueError) as err:
-        Tracker.hash_distinct_id(value="12345678901", key=bytes(16))
+        Tracker.hash_distinct_id(value="12345678901", secret="a" * 16)
 
-    assert err.value.args[0] == "Error in key length. Must be 32 bytes long, got 16"
+    assert (
+        err.value.args[0]
+        == "Error in secret length. Must be at least 32 characters long, got 16"
+    )
 
 
 def test_hash_distinct_id_different_values():
-    key = bytes(32)
+    secret = "a" * 32
 
-    first = Tracker.hash_distinct_id(value="12345678901", key=key)
-    second = Tracker.hash_distinct_id(value="98765432100", key=key)
+    first = Tracker.hash_distinct_id(value="12345678901", secret=secret)
+    second = Tracker.hash_distinct_id(value="98765432100", secret=secret)
 
     assert first != second
 
 
-def test_hash_distinct_id_different_keys():
+def test_hash_distinct_id_different_secrets():
     document = "12345678901"
 
-    first = Tracker.hash_distinct_id(value=document, key=bytes(32))
-    second = Tracker.hash_distinct_id(value=document, key=bytes(range(32)))
+    first = Tracker.hash_distinct_id(value=document, secret="a" * 32)
+    second = Tracker.hash_distinct_id(value=document, secret="b" * 32)
 
     assert first != second
 
 
 def test_hash_distinct_id_is_deterministic():
     document = "12345678901"
-    key = bytes(32)
+    document_with_mask = "123.456.789-01"
+    secret = "a" * 32
 
-    first = Tracker.hash_distinct_id(value=document, key=key)
-    second = Tracker.hash_distinct_id(value=document, key=key)
+    first = Tracker.hash_distinct_id(value=document, secret=secret)
+    second = Tracker.hash_distinct_id(value=document, secret=secret)
+    with_mask = Tracker.hash_distinct_id(value=document_with_mask, secret=secret)
 
-    assert first == second
-
-
-def test_hash_distinct_id_is_reversible():
-    document = "12345678901"
-    key = bytes(32)
-
-    hashed = Tracker.hash_distinct_id(value=document, key=key)
-
-    cipher = AES.new(key, AES.MODE_ECB)
-    decrypted = unpad(cipher.decrypt(bytes.fromhex(hashed)), AES.block_size)
-    decoded = decrypted.decode("utf-8")
-
-    assert decoded == document
+    assert first == second == with_mask
 
 
 def test_tracker_emit_without_handlers(
