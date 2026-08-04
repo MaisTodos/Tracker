@@ -1,7 +1,4 @@
-import hashlib
-import hmac
 import logging
-import re
 from typing import List, Optional
 
 from .dtos import TrackerEvent, TrackerException, TrackerMessage
@@ -25,19 +22,6 @@ class Tracker:
         self.__message_handlers = message_handlers or []
         self.__exception_handlers = exception_handlers or []
         self.__event_handlers = event_handlers or []
-
-    @staticmethod
-    def hash_distinct_id(value: str, secret: str) -> str:
-        if len(secret) < 32:
-            raise ValueError(
-                f"Error in secret length. Must be at least 32 characters long, got {len(secret)}"
-            )
-
-        normalized_value = re.sub(r"\D", "", value)
-
-        return hmac.new(
-            secret.encode("utf-8"), normalized_value.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
 
     def set_tags(self, tags: Tags):
         handlers = (
@@ -81,3 +65,18 @@ class Tracker:
                 handler.capture_event(tracker_event)
             except Exception as e:
                 logger.error(f"Error emitting event for handler {handler}: {e}")
+
+    def hash_distinct_id(self, value: str) -> str:
+        for handler in self.__event_handlers:
+            if hasattr(handler, "hash_distinct_id"):
+                try:
+                    return handler.hash_distinct_id(value=value)
+                except Exception as e:
+                    logger.error(
+                        f"Error hashing distinct_id for handler {handler}: {e}"
+                    )
+                    raise
+
+        raise ValueError(
+            "No event handler with hash_distinct_id support is configured on this Tracker"
+        )

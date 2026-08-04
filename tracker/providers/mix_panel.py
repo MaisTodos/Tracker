@@ -1,4 +1,7 @@
+import hashlib
+import hmac
 import logging
+import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -14,11 +17,13 @@ class MixPanelHandlerEvent(ITrackerHandlerEvent):
     class MixPanelConfig:
         project_token: str
         service_name: str
+        secret: str
         retry_limit: int = 2
 
     config: MixPanelConfig
 
     _DISTINCT_ID_KEYS = ("distinct_id", "id", "user_id")
+    _SECRET_MIN_LENGTH = 32
 
     _IMPORT_ERROR_MESSAGE: str = "mixpanel is required to use MixPanel with Tracker. Please install it via 'pip install mixpanel'."
     _SET_TAGS_MESSAGE: str = (
@@ -29,6 +34,11 @@ class MixPanelHandlerEvent(ITrackerHandlerEvent):
         "MixPanel event handler does not support 'set_contexts', ignoring "
         "(pass contexts per event via 'capture_event()' instead)."
     )
+    _SECRET_LENGTH_ERROR_MESSAGE: str = f"Error in secret length. Must be at least {_SECRET_MIN_LENGTH} characters long."
+
+    def _validate_secret(self, secret: str) -> None:
+        if len(secret) < self._SECRET_MIN_LENGTH:
+            raise ValueError(self._SECRET_LENGTH_ERROR_MESSAGE)
 
     def _init_mixpanel(self, config: "MixPanelConfig"):
         try:
@@ -44,6 +54,7 @@ class MixPanelHandlerEvent(ITrackerHandlerEvent):
     def __init__(self, config: MixPanelConfig) -> None:
         self.config = config
         self.event_source = f"{config.service_name}-server"
+        self._validate_secret(config.secret)
         self._init_mixpanel(config)
 
     def set_tags(self, tags: Tags):
@@ -73,6 +84,15 @@ class MixPanelHandlerEvent(ITrackerHandlerEvent):
             logger.exception(ex)
         finally:
             return ret
+
+    def hash_distinct_id(self, value: str) -> str:
+        normalized_value = re.sub(r"\D", "", value)
+
+        return hmac.new(
+            self.config.secret.encode("utf-8"),  # pragma: no mutate
+            normalized_value.encode("utf-8"),  # pragma: no mutate
+            hashlib.sha256,
+        ).hexdigest()
 
     def track(self, distinct_id: str, event: str, event_attrs: dict):
         self.mp.track(distinct_id, event, event_attrs)

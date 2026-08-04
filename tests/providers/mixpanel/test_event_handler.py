@@ -16,6 +16,7 @@ def make_config(**overrides) -> MixPanelHandlerEvent.MixPanelConfig:
     config = {
         "project_token": "foobar",
         "service_name": "svc",
+        "secret": "a" * 32,
     }
     config.update(overrides)
     return MixPanelHandlerEvent.MixPanelConfig(**config)
@@ -40,6 +41,16 @@ def test_mix_panel_handler_init_stores_config():
     handler = MixPanelHandlerEvent(config=config)
     assert handler.config is config
     assert handler.event_source == "svc-server"
+
+
+def test_mix_panel_handler_init_invalid_secret_length():
+    with pytest.raises(ValueError) as err:
+        make_handler(secret="a" * 16)
+
+    assert (
+        err.value.args[0]
+        == "Error in secret length. Must be at least 32 characters long."
+    )
 
 
 def test_mix_panel_handler__extract_distinct_id():
@@ -118,6 +129,40 @@ def test_mix_panel_handler_set_tags_and_contexts_log_debug(caplog):
     messages = [record.message for record in caplog.records]
     assert handler._SET_TAGS_MESSAGE in messages
     assert handler._SET_CONTEXTS_MESSAGE in messages
+
+
+def test_hash_distinct_id_different_values():
+    handler = make_handler()
+
+    first = handler.hash_distinct_id(value="12345678901")
+    second = handler.hash_distinct_id(value="98765432100")
+
+    assert first != second
+
+
+def test_hash_distinct_id_different_secrets():
+    document = "12345678901"
+
+    first_handler = make_handler(secret="a" * 32)
+    first = first_handler.hash_distinct_id(value=document)
+
+    second_handler = make_handler(secret="b" * 32)
+    second = second_handler.hash_distinct_id(value=document)
+
+    assert first != second
+
+
+def test_hash_distinct_id_is_deterministic():
+    handler = make_handler()
+
+    document = "12345678901"
+    document_with_mask = "123.456.789-01"
+
+    first = handler.hash_distinct_id(value=document)
+    second = handler.hash_distinct_id(value=document)
+    with_mask = handler.hash_distinct_id(value=document_with_mask)
+
+    assert first == second == with_mask
 
 
 def test_mix_panel_handler_track():

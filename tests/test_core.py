@@ -1,50 +1,9 @@
-import hashlib
-import hmac
 import logging
+from unittest.mock import Mock
 
 import pytest
 
 from tracker.core import Tracker
-
-
-def test_hash_distinct_id_invalid_secret_length():
-    with pytest.raises(ValueError) as err:
-        Tracker.hash_distinct_id(value="12345678901", secret="a" * 16)
-
-    assert (
-        err.value.args[0]
-        == "Error in secret length. Must be at least 32 characters long, got 16"
-    )
-
-
-def test_hash_distinct_id_different_values():
-    secret = "a" * 32
-
-    first = Tracker.hash_distinct_id(value="12345678901", secret=secret)
-    second = Tracker.hash_distinct_id(value="98765432100", secret=secret)
-
-    assert first != second
-
-
-def test_hash_distinct_id_different_secrets():
-    document = "12345678901"
-
-    first = Tracker.hash_distinct_id(value=document, secret="a" * 32)
-    second = Tracker.hash_distinct_id(value=document, secret="b" * 32)
-
-    assert first != second
-
-
-def test_hash_distinct_id_is_deterministic():
-    document = "12345678901"
-    document_with_mask = "123.456.789-01"
-    secret = "a" * 32
-
-    first = Tracker.hash_distinct_id(value=document, secret=secret)
-    second = Tracker.hash_distinct_id(value=document, secret=secret)
-    with_mask = Tracker.hash_distinct_id(value=document_with_mask, secret=secret)
-
-    assert first == second == with_mask
 
 
 def test_tracker_emit_without_handlers(
@@ -281,4 +240,43 @@ def test_tracker_set_contexts_when_handler_raises(handlers_mocks, caplog):
     assert (
         log_record.message
         == f"Error setting contexts for handler {message_handler}: Handler Error"
+    )
+
+
+def test_tracker_hash_distinct_id():
+    handler = Mock(spec=["hash_distinct_id"])
+    handler.hash_distinct_id.return_value = "hashed-value"
+
+    tracker = Tracker(event_handlers=[handler])
+    result = tracker.hash_distinct_id(value="12345678901")
+
+    assert result == "hashed-value"
+
+
+def test_tracker_hash_distinct_id_error(caplog):
+    handler = Mock(spec=["hash_distinct_id"])
+    handler.hash_distinct_id.side_effect = Exception("teste")
+
+    tracker = Tracker(event_handlers=[handler])
+
+    with caplog.at_level(logging.ERROR):
+        with pytest.raises(Exception, match="teste"):
+            tracker.hash_distinct_id(value="12345678901")
+
+    log_record = caplog.records[0]
+    assert (
+        log_record.message == f"Error hashing distinct_id for handler {handler}: teste"
+    )
+
+
+def test_tracker_hash_distinct_id_no_supporting_handler():
+    handler = Mock(spec=["generic"])
+    tracker = Tracker(event_handlers=[handler])
+
+    with pytest.raises(ValueError) as err:
+        tracker.hash_distinct_id(value="12345678901")
+
+    assert (
+        err.value.args[0]
+        == "No event handler with hash_distinct_id support is configured on this Tracker"
     )
