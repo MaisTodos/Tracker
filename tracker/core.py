@@ -65,3 +65,18 @@ class Tracker:
                 handler.capture_event(tracker_event)
             except Exception as e:
                 logger.error(f"Error emitting event for handler {handler}: {e}")
+
+    def hash_distinct_id(self, value: str) -> str:
+        for handler in self.__event_handlers:
+            if hasattr(handler, "hash_distinct_id"):
+                try:
+                    return handler.hash_distinct_id(value=value)
+                except Exception as e:
+                    logger.error(
+                        f"Error hashing distinct_id for handler {handler}: {e}"
+                    )
+                    raise
+
+        raise ValueError(
+            "No event handler with hash_distinct_id support is configured on this Tracker"
+        )

@@ -62,6 +62,7 @@ mix_panel_handler = MixPanelHandlerEvent(
     config=MixPanelHandlerEvent.MixPanelConfig(
         project_token="YOUR_PROJECT_TOKEN",
         service_name="auth-service",
+        secret="STRING_WITH_AT_LEAST_32_CHARACTERS,
     )
 )
 
@@ -76,6 +77,18 @@ um atributo `source` igual a `"{service_name}-server"`.
 > (`tracker.set_tags`/`set_contexts`) — essas chamadas apenas emitem um log `debug`. Apenas o
 > Sentry honra tags/contextos globais. Para Logger e MixPanel, informe as tags/contextos por
 > evento/mensagem/exceção.
+
+#### MixPanel (fingerprint determinístico)
+
+O provedor MixPanel permite gerar um fingerprint determinístico a partir do CPF do usuário
+via HMAC-SHA256, retornado como string hexadecimal.
+
+```python
+distinct_id = tracker.hash_distinct_id(value="user_cpf")
+```
+**Orientações de utilização:**
+- `value` é normalizado, então documentos com e sem máscara (ex.:"123.456.789-01" e "12345678901") produzem o mesmo resultado.
+- O segredo utilizado na função hash é o valor `secret` configurado no `MixPanelHandlerEvent`.
 
 ## Uso
 
@@ -174,7 +187,6 @@ tracker.set_contexts({
     }
 })
 ```
-
 
 ### Exemplo Completo
 
